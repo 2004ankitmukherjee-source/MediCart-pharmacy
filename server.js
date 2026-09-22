@@ -9,7 +9,7 @@ const db = new Database("medicart.db");
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname));
+app.use(express.static(__dirname));
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS products (
@@ -182,3 +182,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
+  console.log(`MediCart running at http://localhost:${PORT}`);
+});
