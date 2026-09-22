@@ -1,26 +1,486 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MediCart Admin</title><link rel="stylesheet" href="css/style.css"></head>
-<body><header><div class="container nav"><a class="logo" href="index.html">💊 MediCart Admin</a><nav><a href="index.html">Store</a></nav></div></header>
-<main class="container section">
-<h1>Admin Dashboard</h1>
-<div class="about"><h2>Add Product</h2><form id="productForm">
-<label>Name<input required name="name"></label><label>Category<input required name="category"></label>
-<label>Price<input required type="number" min="0" step="0.01" name="price"></label>
-<label>Icon<input name="icon" value="💊"></label><label>Stock<input type="number" min="0" name="stock" value="100"></label>
-<button class="btn">Add Product</button></form></div>
-<h2>Products</h2><div id="adminProducts"></div>
-<h2>Orders</h2><div id="orders"></div>
-</main><footer><p>© 2026 MediCart | Demo Project</p></footer>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediCart Admin Panel</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    header {
+      background: #0d6efd;
+      color: white;
+      padding: 18px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 28px;
+      font-weight: bold;
+      color: #0d6efd;
+    }
+
+    .section {
+      background: white;
+      padding: 25px;
+      margin-bottom: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .section h2 {
+      margin-bottom: 20px;
+    }
+
+    input, select {
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #0d6efd;
+      color: white;
+      margin: 3px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .delete {
+      background: #dc3545;
+    }
+
+    .edit {
+      background: #198754;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f3f5;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>💊 MediCart Admin Panel</h1>
+  <button onclick="location.href='index.html'">Back to Website</button>
+</header>
+
+<div class="container">
+
+  <div class="dashboard">
+    <div class="card">
+      <h3>Total Products</h3>
+      <p id="totalProducts">0</p>
+    </div>
+
+    <div class="card">
+      <h3>Total Orders</h3>
+      <p id="totalOrders">0</p>
+    </div>
+
+    <div class="card">
+      <h3>Total Sales</h3>
+      <p id="totalSales">₹0</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>➕ Add Product</h2>
+
+    <input type="text" id="productName" placeholder="Product Name">
+    <input type="text" id="productCategory" placeholder="Category">
+    <input type="number" id="productPrice" placeholder="Price">
+    <input type="text" id="productIcon" placeholder="Icon 💊">
+    <input type="number" id="productStock" placeholder="Stock">
+
+    <button onclick="addProduct()">Add Product</button>
+  </div>
+
+  <div class="section">
+    <h2>💊 Products</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="productsTable">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>📦 Orders</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="ordersTable">
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
 <script>
-async function load(){
- const p=await (await fetch("/api/products")).json();
- document.getElementById("adminProducts").innerHTML=p.map(x=>`<div class="cart-item"><span><b>${x.name}</b> — ₹${x.price} — Stock ${x.stock}</span><button onclick="del(${x.id})">Delete</button></div>`).join("");
- const o=await (await fetch("/api/orders")).json();
- document.getElementById("orders").innerHTML=o.map(x=>`<div class="cart-item"><span><b>Order #${x.id}</b> — ${x.name} — ₹${x.total.toFixed(2)} — ${x.status}</span><select onchange="status(${x.id},this.value)"><option ${x.status=="Placed"?"selected":""}>Placed</option><option ${x.status=="Processing"?"selected":""}>Processing</option><option ${x.status=="Shipped"?"selected":""}>Shipped</option><option ${x.status=="Delivered"?"selected":""}>Delivered</option><option ${x.status=="Cancelled"?"selected":""}>Cancelled</option></select></div>`).join("")||"<p>No orders yet.</p>";
+
+async function loadProducts() {
+
+  const response = await fetch("/api/products");
+  const products = await response.json();
+
+  document.getElementById("totalProducts").textContent = products.length;
+
+  const table = document.getElementById("productsTable");
+
+  table.innerHTML = "";
+
+  products.forEach(product => {
+
+    table.innerHTML += `
+      <tr>
+        <td>${product.id}</td>
+        <td>${product.icon} ${product.name}</td>
+        <td>${product.category}</td>
+        <td>₹${product.price}</td>
+        <td>${product.stock}</td>
+        <td>
+          <button class="edit" onclick="editProduct(${product.id}, '${product.name}', '${product.category}', ${product.price}, '${product.icon}', ${product.stock})">
+            Edit
+          </button>
+
+          <button class="delete" onclick="deleteProduct(${product.id})">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  });
 }
-async function del(id){if(confirm("Delete product?")){await fetch("/api/products/"+id,{method:"DELETE"});load()}}
-async function status(id,status){await fetch("/api/orders/"+id+"/status",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})});load()}
-document.getElementById("productForm").addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(e.target);await fetch("/api/products",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.fromEntries(f))});e.target.reset();load()});
-load();
-</script></body></html>
+
+
+async function addProduct() {
+
+  const name = document.getElementById("productName").value;
+  const category = document.getElementById("productCategory").value;
+  const price = document.getElementById("productPrice").value;
+  const icon = document.getElementById("productIcon").value || "💊";
+  const stock = document.getElementById("productStock").value || 100;
+
+  if (!name || !category || !price) {
+    alert("Please fill product name, category and price.");
+    return;
+  }
+
+  const response = await fetch("/api/products", {
+
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      name,
+      category,
+      price,
+      icon,
+      stock
+    })
+
+  });
+
+  if (response.ok) {
+
+    alert("Product added successfully!");
+
+    document.getElementById("productName").value = "";
+    document.getElementById("productCategory").value = "";
+    document.getElementById("productPrice").value = "";
+    document.getElementById("productIcon").value = "";
+    document.getElementById("productStock").value = "";
+
+    loadProducts();
+
+  } else {
+
+    alert("Failed to add product.");
+
+  }
+}
+
+
+async function deleteProduct(id) {
+
+  if (!confirm("Are you sure you want to delete this product?")) {
+    return;
+  }
+
+  const response = await fetch(`/api/products/${id}`, {
+    method: "DELETE"
+  });
+
+  if (response.ok) {
+
+    alert("Product deleted.");
+
+    loadProducts();
+
+  } else {
+
+    alert("Failed to delete product.");
+
+  }
+}
+
+
+async function editProduct(id, name, category, price, icon, stock) {
+
+  const newName = prompt("Product Name:", name);
+
+  if (newName === null) return;
+
+  const newCategory = prompt("Category:", category);
+
+  if (newCategory === null) return;
+
+  const newPrice = prompt("Price:", price);
+
+  if (newPrice === null) return;
+
+  const newStock = prompt("Stock:", stock);
+
+  if (newStock === null) return;
+
+  const response = await fetch(`/api/products/${id}`, {
+
+    method: "PUT",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      name: newName,
+      category: newCategory,
+      price: Number(newPrice),
+      icon: icon,
+      stock: Number(newStock)
+    })
+
+  });
+
+  if (response.ok) {
+
+    alert("Product updated successfully!");
+
+    loadProducts();
+
+  } else {
+
+    alert("Failed to update product.");
+
+  }
+}
+
+
+async function loadOrders() {
+
+  const response = await fetch("/api/orders");
+  const orders = await response.json();
+
+  document.getElementById("totalOrders").textContent = orders.length;
+
+  let sales = 0;
+
+  orders.forEach(order => {
+    sales += Number(order.total);
+  });
+
+  document.getElementById("totalSales").textContent =
+    "₹" + sales.toFixed(2);
+
+  const table = document.getElementById("ordersTable");
+
+  table.innerHTML = "";
+
+  orders.forEach(order => {
+
+    table.innerHTML += `
+      <tr>
+
+        <td>${order.id}</td>
+
+        <td>
+          ${order.name}
+          <br>
+          ${order.email}
+        </td>
+
+        <td>${order.phone}</td>
+
+        <td>₹${order.total}</td>
+
+        <td>${order.status}</td>
+
+        <td>
+
+          <select onchange="updateStatus(${order.id}, this.value)">
+
+            <option ${order.status === "Placed" ? "selected" : ""}>
+              Placed
+            </option>
+
+            <option ${order.status === "Processing" ? "selected" : ""}>
+              Processing
+            </option>
+
+            <option ${order.status === "Shipped" ? "selected" : ""}>
+              Shipped
+            </option>
+
+            <option ${order.status === "Delivered" ? "selected" : ""}>
+              Delivered
+            </option>
+
+            <option ${order.status === "Cancelled" ? "selected" : ""}>
+              Cancelled
+            </option>
+
+          </select>
+
+        </td>
+
+      </tr>
+    `;
+  });
+}
+
+
+async function updateStatus(id, status) {
+
+  const response = await fetch(`/api/orders/${id}/status`, {
+
+    method: "PATCH",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      status
+    })
+
+  });
+
+  if (response.ok) {
+
+    alert("Order status updated!");
+
+    loadOrders();
+
+  } else {
+
+    alert("Failed to update order status.");
+
+  }
+}
+
+
+loadProducts();
+loadOrders();
+
+</script>
+
+</body>
+</html>
