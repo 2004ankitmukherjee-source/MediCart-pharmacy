@@ -9,7 +9,7 @@ const db = new Database("medicart.db");
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname));
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS products (
@@ -177,6 +177,8 @@ app.patch("/api/orders/:id/status", (req,res) => {
 
 app.get("/api/health", (req,res) => res.json({status:"OK",database:"SQLite connected"}));
 
-app.listen(PORT, () => {
-  console.log(`MediCart running at http://localhost:${PORT}`);
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
+
+app.listen(PORT, () => {
