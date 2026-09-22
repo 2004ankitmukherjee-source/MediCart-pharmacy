@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MediCart Admin</title><link rel="stylesheet" href="css/style.css"></head>
+<body><header><div class="container nav"><a class="logo" href="index.html">💊 MediCart Admin</a><nav><a href="index.html">Store</a></nav></div></header>
+<main class="container section">
+<h1>Admin Dashboard</h1>
+<div class="about"><h2>Add Product</h2><form id="productForm">
+<label>Name<input required name="name"></label><label>Category<input required name="category"></label>
+<label>Price<input required type="number" min="0" step="0.01" name="price"></label>
+<label>Icon<input name="icon" value="💊"></label><label>Stock<input type="number" min="0" name="stock" value="100"></label>
+<button class="btn">Add Product</button></form></div>
+<h2>Products</h2><div id="adminProducts"></div>
+<h2>Orders</h2><div id="orders"></div>
+</main><footer><p>© 2026 MediCart | Demo Project</p></footer>
+<script>
+async function load(){
+ const p=await (await fetch("/api/products")).json();
+ document.getElementById("adminProducts").innerHTML=p.map(x=>`<div class="cart-item"><span><b>${x.name}</b> — ₹${x.price} — Stock ${x.stock}</span><button onclick="del(${x.id})">Delete</button></div>`).join("");
+ const o=await (await fetch("/api/orders")).json();
+ document.getElementById("orders").innerHTML=o.map(x=>`<div class="cart-item"><span><b>Order #${x.id}</b> — ${x.name} — ₹${x.total.toFixed(2)} — ${x.status}</span><select onchange="status(${x.id},this.value)"><option ${x.status=="Placed"?"selected":""}>Placed</option><option ${x.status=="Processing"?"selected":""}>Processing</option><option ${x.status=="Shipped"?"selected":""}>Shipped</option><option ${x.status=="Delivered"?"selected":""}>Delivered</option><option ${x.status=="Cancelled"?"selected":""}>Cancelled</option></select></div>`).join("")||"<p>No orders yet.</p>";
+}
+async function del(id){if(confirm("Delete product?")){await fetch("/api/products/"+id,{method:"DELETE"});load()}}
+async function status(id,status){await fetch("/api/orders/"+id+"/status",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})});load()}
+document.getElementById("productForm").addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(e.target);await fetch("/api/products",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.fromEntries(f))});e.target.reset();load()});
+load();
+</script></body></html>
